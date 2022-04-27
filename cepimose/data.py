@@ -2061,6 +2061,7 @@ _lab_end_ts_command = {
 }
 
 _lab_end_ts_req = _create_req("lab", [_lab_end_ts_command])
+_lab_end_ts_req_with_cache = _create_req("lab", [_lab_end_ts_command], cache_key=True)
 
 _lab_PCR_tests_performed_command = {
     "SemanticQueryDataShapeCommand": {
@@ -2134,6 +2135,9 @@ _lab_PCR_tests_performed_command = {
 }
 
 _lab_PCR_tests_performed_req = _create_req("lab", [_lab_PCR_tests_performed_command])
+_lab_PCR_tests_performed_req_with_cache = _create_req(
+    "lab", [_lab_PCR_tests_performed_command], cache_key=True
+)
 
 _lab_PCR_total_tests_performed_command = {
     "SemanticQueryDataShapeCommand": {
@@ -2802,6 +2806,9 @@ _lab_cases_confirmed_command = {
 }
 
 _lab_cases_confirmed_req = _create_req("lab", [_lab_cases_confirmed_command])
+_lab_cases_confirmed_req_with_cache = _create_req(
+    "lab", [_lab_cases_confirmed_command], cache_key=True
+)
 
 _lab_confirmed_total_female_command = {
     "SemanticQueryDataShapeCommand": {
@@ -3151,3 +3158,6 @@ _lab_HAT_tests_performed_command = {
 }
 
 _lab_HAT_tests_performed_req = _create_req("lab", [_lab_HAT_tests_performed_command])
+_lab_HAT_tests_performed_req_with_cache = _create_req(
+    "lab", [_lab_HAT_tests_performed_command], cache_key=True
+)

@@ -23,7 +23,9 @@ from .data import (
     _vaccinations_by_manufacturer_used_request,
     _lab_start_ts_req,
     _lab_end_ts_req,
+    _lab_end_ts_req_with_cache,
     _lab_PCR_tests_performed_req,
+    _lab_PCR_tests_performed_req_with_cache,
     _lab_PCR_total_tests_performed_req,
     _lab_active_cases_estimated_req,
     _lab_confirmed_total_male_req,
@@ -32,10 +34,12 @@ from .data import (
     _lab_cases_total_confirmed_req,
     _lab_HAT_total_tests_performed_req,
     _lab_cases_confirmed_req,
+    _lab_cases_confirmed_req_with_cache,
     _lab_confirmed_total_female_req,
     _lab_total_vaccinated_fully_req,
     _lab_cases_avg_7Days_req,
     _lab_HAT_tests_performed_req,
+    _lab_HAT_tests_performed_req_with_cache,
 )
 from .parser import (
     _parse_vaccinations_by_age,
@@ -502,6 +506,19 @@ def lab_end_timestamp() -> datetime.datetime:
     )
 
 
+def lab_end_timestamp_with_cache() -> datetime.datetime:
+    """Gets NIJZ last data update time
+
+    Returns:
+        datetime: datetime representing NIJZ last data update time
+    """
+    return _get_data(
+        _lab_end_ts_req_with_cache,
+        _parse_vaccinations_timestamp,
+        _lab_dashboard_headers,
+    )
+
+
 def lab_PCR_tests_performed() -> int:
     """Gets performed PCR tests on today
 
@@ -512,6 +529,21 @@ def lab_PCR_tests_performed() -> int:
     """
     return _get_data(
         _lab_PCR_tests_performed_req, _parse_single_data, _lab_dashboard_headers
+    )
+
+
+def lab_PCR_tests_performed_with_cache() -> int:
+    """Gets performed PCR tests on today
+
+    today -> date from lab_end_timestamp()
+
+    Returns:
+        int: a int number representing performed PCR tests on today
+    """
+    return _get_data(
+        _lab_PCR_tests_performed_req_with_cache,
+        _parse_single_data,
+        _lab_dashboard_headers,
     )
 
 
@@ -621,6 +653,19 @@ def lab_cases_confirmed() -> int:
     )
 
 
+def lab_cases_confirmed_with_cache() -> int:
+    """Gets confirmed cases on today
+
+    today -> date from lab_end_timestamp()
+
+    Returns:
+        int: a int number representing confirmed cases on today
+    """
+    return _get_data(
+        _lab_cases_confirmed_req_with_cache, _parse_single_data, _lab_dashboard_headers
+    )
+
+
 def lab_confirmed_total_female() -> int:
     """Gets female total confirmed cases in date range
 
@@ -674,6 +719,21 @@ def lab_HAT_tests_performed():
     )
 
 
+def lab_HAT_tests_performed_with_cache():
+    """Gets performed HAT tests on today
+
+    today -> date from lab_end_timestamp()
+
+    Returns:
+        int: a int number representing performed HAT tests on today
+    """
+    return _get_data(
+        _lab_HAT_tests_performed_req_with_cache,
+        _parse_single_data,
+        _lab_dashboard_headers,
+    )
+
+
 def get_lab_dashboard() -> LabDashboard:
     """Gets NIJZ dashboard:
         'Prikaz števila opravljenih cepljenj, testiranj in potrjenih okužb s covid-19 v SLoveniji'
@@ -716,5 +776,46 @@ def get_lab_dashboard() -> LabDashboard:
         vaccinated_first_dose=vaccinated_first_dose,
         vaccinated_fully=vaccinated_fully,
     )
+
+    return result
+
+
+def abort_update_labtests():
+    end_date = lab_end_timestamp()
+    end_date_with_cache = lab_end_timestamp_with_cache()
+
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    now = datetime.datetime.now()
+
+    should_abort = end_date.date() < yesterday
+    should_abort_with_cache = end_date_with_cache.date() < yesterday
+
+    result = {
+        "abort": True,
+        "now": now,
+        "date_no_cache": end_date,
+        "date_with_cache": end_date_with_cache,
+        "date": yesterday - datetime.timedelta(days=1),
+    }
+
+    if should_abort and should_abort_with_cache:
+        print("Aborting update labtests")
+        print(
+            f"Now is {now}. Date no cache: {end_date.date()}. Date with cache: {end_date_with_cache.date()}. Expecting: {yesterday}"
+        )
+        return result
+
+    result["abort"] = False
+    result["date"] = yesterday
+    return result
+
+
+def get_lab_dashboard_with_cache():
+    pcr = lab_PCR_tests_performed_with_cache()
+    hat = lab_HAT_tests_performed_with_cache()
+    cases = lab_cases_confirmed_with_cache()
+    end_date = lab_end_timestamp_with_cache()
+
+    result = LabDashboard(date=end_date, pcr=pcr, hat=hat, confirmed=cases)
 
     return result
